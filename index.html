@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>推焦推演台 · 值班工长用</title>
+<style>
+  :root { --bg:#14171c; --panel:#1d2129; --line:#2c333f; --txt:#dfe5ee; --dim:#8b95a5;
+          --ok:#3fb96b; --warn:#e0a23c; --bad:#e05252; --acc:#4f8fe8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.5 "Microsoft YaHei",sans-serif; }
+  header { padding:12px 18px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:14px; }
+  header h1 { font-size:18px; margin:0; }
+  header span { color:var(--dim); font-size:12px; }
+  .wrap { display:flex; gap:14px; padding:14px 18px; align-items:flex-start; }
+  .side { width:300px; flex:none; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .side h2 { font-size:13px; margin:14px 0 6px; color:var(--acc); }
+  .side h2:first-child { margin-top:0; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; }
+  label { font-size:12px; color:var(--dim); display:block; }
+  input, textarea { width:100%; background:#12151b; color:var(--txt); border:1px solid var(--line);
+                    border-radius:5px; padding:4px 6px; font:inherit; }
+  textarea { height:56px; resize:vertical; font-size:12px; }
+  .main { flex:1; min-width:0; }
+  .bar { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+         display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .bar input { width:auto; }
+  button { background:var(--acc); color:#fff; border:0; border-radius:5px; padding:5px 14px; cursor:pointer; font:inherit; }
+  button.ghost { background:#2a313d; }
+  #snapInfo { font-size:13px; color:var(--warn); }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; }
+  th, td { padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; font-size:13px; white-space:nowrap; }
+  th { color:var(--dim); font-weight:normal; font-size:12px; }
+  tbody tr { cursor:pointer; }
+  tbody tr:hover { background:#232936; }
+  tr.sel { outline:2px solid var(--acc); outline-offset:-2px; }
+  .tag { padding:1px 8px; border-radius:10px; font-size:12px; }
+  .t-ok { background:rgba(63,185,107,.15); color:var(--ok); }
+  .t-warn { background:rgba(224,162,60,.15); color:var(--warn); }
+  .t-bad { background:rgba(224,82,82,.18); color:var(--bad); }
+  #detail { margin-top:12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:13px; }
+  #detail h3 { margin:0 0 6px; font-size:14px; }
+  #detail li { margin:2px 0; }
+  .hint { font-size:12px; color:var(--dim); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>推焦推演台</h1>
+  <span>从接班起按分钟前推 · 改任意条件即重算 · 点行看“为什么排在这”</span>
+</header>
+<div class="wrap">
+  <div class="side">
+    <h2>基本条件</h2>
+    <div class="grid">
+      <div><label>接班时刻</label><input id="shiftStart" value="08:00"></div>
+      <div><label>炉孔数</label><input id="ovenCount" type="number" value="20" min="1"></div>
+      <div><label>结焦时间(小时)</label><input id="cokingHours" type="number" value="21" step="0.5"></div>
+      <div><label>首孔到点(分后)</label><input id="firstReadyOffset" type="number" value="30"></div>
+      <div><label>计划间隔(分)</label><input id="idealInterval" type="number" value="12"></div>
+      <div><label>到点扰动(±分)</label><input id="jitter" type="number" value="0" min="0"></div>
+      <div><label>推焦车周期(分)</label><input id="cycleTime" type="number" value="15"></div>
+      <div><label>窗口宽(分)</label><input id="lateTolerance" type="number" value="20"></div>
+    </div>
+    <h2>设备不可用时段（每行一段：08:30-09:10 备注）</h2>
+    <label>推焦车</label><textarea id="eqPusher" placeholder="例：11:30-12:10 清导轨"></textarea>
+    <label>拦焦车</label><textarea id="eqGuide" placeholder="例：10:00-10:30 加油"></textarea>
+    <label>熄焦车</label><textarea id="eqQuench" placeholder="例：13:00-13:20 换泵"></textarea>
+    <h2>检修计划（插入即让路）</h2>
+    <textarea id="maint" placeholder="例：09:00-09:40 炉门检修"></textarea>
+    <div class="hint">三车任一不可用或检修时段，该孔顺延；晚过死线即作废标红，不再后排。</div>
+  </div>
+  <div class="main">
+    <div class="bar">
+      <label style="color:var(--txt)">把钟拨回</label>
+      <input id="queryTime" value="10:00">
+      <button id="btnSnap" class="ghost">回看此刻</button>
+      <button id="btnNow" class="ghost">回到接班</button>
+      <span id="snapInfo"></span>
+    </div>
+    <table>
+      <thead><tr>
+        <th>序号</th><th>炉号</th><th>装煤时刻</th><th>结焦时间</th><th>到点时刻</th>
+        <th>计划推焦</th><th>状态</th><th>当时状态</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="detail"><h3>点任意一行</h3><span class="hint">看这孔为什么排在这个位置、前面压了几孔、被什么耽误过。</span></div>
+  </div>
+</div>
+<script src="sim.js"></script>
+<script>
+(function () {
+  var S = CokeSim, $ = function (id) { return document.getElementById(id); };
+  var sim = null, snap = null, queryT = null;
+
+  function readParams() {
+    return {
+      shiftStart: S.parseHM($('shiftStart').value) || 0,
+      ovenCount: +$('ovenCount').value || 1,
+      cokingMinutes: Math.round((+$('cokingHours').value || 0) * 60),
+      firstReadyOffset: +$('firstReadyOffset').value || 0,
+      idealInterval: +$('idealInterval').value || 1,
+      jitter: +$('jitter').value || 0,
+      cycleTime: +$('cycleTime').value || 1,
+      lateTolerance: +$('lateTolerance').value || 0
+    };
+  }
+
+  function recompute() {
+    var p = readParams();
+    sim = S.simulate(p, {
+      pusher: S.parseWindows($('eqPusher').value),
+      guide:  S.parseWindows($('eqGuide').value),
+      quench: S.parseWindows($('eqQuench').value)
+    }, S.parseWindows($('maint').value));
+    queryT = S.parseHM($('queryTime').value);
+    snap = queryT == null ? null : S.snapshot(sim, queryT);
+    render();
+  }
+
+  function stateAt(id) {
+    if (!snap) return '—';
+    var s = snap.filter(function (x) { return x.id === id; })[0];
+    return s ? s.state : '—';
+  }
+
+  function render() {
+    var tb = $('rows'); tb.innerHTML = '';
+    sim.results.forEach(function (r) {
+      var tr = document.createElement('tr');
+      var cls = r.status === '过窗口' ? 't-bad' : r.status === '临界' ? 't-warn' : 't-ok';
+      tr.innerHTML =
+        '<td>' + (r.seq || '—') + '</td><td>' + r.id + ' 号</td>' +
+        '<td>' + S.fmtHM(r.charge) + '</td><td>' + r.cokingHours + ' h</td>' +
+        '<td>' + S.fmtHM(r.ready) + '</td>' +
+        '<td><b>' + S.fmtHM(r.push) + '</b></td>' +
+        '<td><span class="tag ' + cls + '">' + r.status + '</span></td>' +
+        '<td>' + stateAt(r.id) + '</td>';
+      tr.onclick = function () { showDetail(r, tr); };
+      tb.appendChild(tr);
+    });
+    var done = snap ? snap.filter(function (s) { return s.state === '已推完'; }).length : 0;
+    var dead = sim.results.filter(function (r) { return r.status === '过窗口'; }).length;
+    $('snapInfo').textContent = snap
+      ? S.fmtHM(queryT) + ' 时刻：已推完 ' + done + ' 孔 · 全班作废 ' + dead + ' 孔'
+      : '全班作废 ' + dead + ' 孔';
+  }
+
+  function showDetail(r, tr) {
+    var old = document.querySelector('tr.sel'); if (old) old.classList.remove('sel');
+    tr.classList.add('sel');
+    var ahead = r.seq ? r.seq - 1 : 0;
+    var s = snap ? snap.filter(function (x) { return x.id === r.id; })[0] : null;
+    var html = '<h3>' + r.id + ' 号炭化室' + (r.seq ? ' · 第 ' + r.seq + ' 推' : ' · 未排上') + '</h3><ul>' +
+      '<li>装煤 ' + S.fmtHM(r.charge) + ' ＋ 结焦 ' + r.cokingHours + ' h ＝ 到点 <b>' + S.fmtHM(r.ready) + '</b>，死线 ' + S.fmtHM(r.windowEnd) + '</li>' +
+      '<li>计划推焦时刻：<b>' + S.fmtHM(r.push) + '</b>（窗口内' + (r.push != null ? '，富余 ' + (r.windowEnd - r.push) + ' 分钟' : '') + '）</li>' +
+      (r.seq ? '<li>它前面压了 <b>' + ahead + '</b> 孔；一孔晚推，后面序号整体后挪。</li>' : '') +
+      (s ? '<li>拨回 ' + S.fmtHM(queryT) + ' 看：' + s.state + (s.state === '待推' ? '，当时前面还压着 ' + s.aheadAtT + ' 孔' : '') + '</li>' : '') +
+      '</ul><u>排程依据</u><ul>' +
+      r.reasons.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>';
+    $('detail').innerHTML = html;
+  }
+
+  ['shiftStart','ovenCount','cokingHours','firstReadyOffset','idealInterval','jitter',
+   'cycleTime','lateTolerance','eqPusher','eqGuide','eqQuench','maint']
+    .forEach(function (id) { $(id).addEventListener('input', recompute); });
+  $('btnSnap').onclick = recompute;
+  $('queryTime').addEventListener('input', recompute);
+  $('btnNow').onclick = function () { $('queryTime').value = $('shiftStart').value; recompute(); };
+  recompute();
+})();
+</script>
+</body>
+</html>
