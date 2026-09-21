@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="favicon.svg">
+<title>推焦推演台 · 焦化厂值班工长</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-title">推焦推演台</div>
+    <div class="brand-sub">COKE PUSHING SIMULATOR · 值班工长指挥台</div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="clockbox">
+    <div class="clock-label">推演时刻（拨杆回放）</div>
+    <div class="clock" id="clock">08:00</div>
+    <div class="clock-sub" id="clockSub"></div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左：条件面板 -->
+  <aside class="panel side" id="sideLeft">
+    <div class="side-scroll">
+      <section class="grp">
+        <h3>接班条件</h3>
+        <label class="fld"><span>接班日期</span><input type="date" id="fDate"></label>
+        <label class="fld"><span>接班时刻（早班）</span><input type="time" id="fShift" step="60"></label>
+        <label class="fld"><span>炭化室孔数</span><input type="number" id="fOvens" min="10" max="120" step="1"></label>
+        <label class="fld"><span>推焦串序</span>
+          <select id="fStep">
+            <option value="2">2-1 串序</option>
+            <option value="5">5-2 串序</option>
+            <option value="9">9-2 串序</option>
+          </select>
+        </label>
+        <label class="fld"><span>首推炉号（接班第一孔）</span><input type="number" id="fFirst" min="1" step="1"></label>
+        <label class="fld"><span>首孔计划推焦</span><input type="time" id="fFirstTarget" step="60"></label>
+      </section>
+
+      <section class="grp">
+        <h3>结焦与窗口</h3>
+        <label class="fld fld-row">
+          <span>结焦时间</span>
+          <span class="inline"><input type="number" id="fCokeH" min="0" max="48" step="1"> 时
+          <input type="number" id="fCokeM" min="0" max="59" step="1"> 分</span>
+        </label>
+        <label class="fld"><span>允许提前（分）· 早了生焦</span><input type="number" id="fEarly" min="0" max="60" step="1"></label>
+        <label class="fld"><span>允许滞后（分）· 晚了废炉</span><input type="number" id="fLate" min="0" max="60" step="1"></label>
+        <label class="fld"><span>相邻序号计划间隔（分）</span><input type="number" id="fGap" min="1" max="120" step="1"></label>
+      </section>
+
+      <section class="grp">
+        <h3>三车状态（凑齐才能推）</h3>
+        <div class="vehicle" data-v="pusher">
+          <div class="vehicle-name">推焦车 <small>焦侧轨道 · 一台</small></div>
+          <label>走行 分/孔<input type="number" class="v-speed" min="0" max="60" step="0.1"></label>
+          <label>占时 分<input type="number" class="v-occupy" min="1" max="60" step="1"></label>
+          <label>接班位置<input type="number" class="v-pos" min="1" step="1"></label>
+          <label>故障停用至 <small>空=正常</small><input type="time" class="v-down" step="60"></label>
+        </div>
+        <div class="vehicle" data-v="guide">
+          <div class="vehicle-name">拦焦车</div>
+          <label>走行 分/孔<input type="number" class="v-speed" min="0" max="60" step="0.1"></label>
+          <label>占时 分<input type="number" class="v-occupy" min="1" max="60" step="1"></label>
+          <label>接班位置<input type="number" class="v-pos" min="1" step="1"></label>
+          <label>故障停用至 <small>空=正常</small><input type="time" class="v-down" step="60"></label>
+        </div>
+        <div class="vehicle" data-v="quench">
+          <div class="vehicle-name">熄焦车</div>
+          <label>走行 分/孔<input type="number" class="v-speed" min="0" max="60" step="0.1"></label>
+          <label>占时/周转 分<input type="number" class="v-occupy" min="1" max="90" step="1"></label>
+          <label>接班位置<input type="number" class="v-pos" min="1" step="1"></label>
+          <label>故障停用至 <small>空=正常</small><input type="time" class="v-down" step="60"></label>
+        </div>
+      </section>
+
+      <section class="grp">
+        <h3>检修计划（时段内全孔让路）</h3>
+        <div id="maintList" class="maint-list"></div>
+        <button class="btn btn-ghost" id="btnAddMaint">＋ 插入检修时段</button>
+      </section>
+
+      <div class="side-actions">
+        <button class="btn" id="btnRecalc">立即重算</button>
+        <button class="btn btn-ghost" id="btnReset">恢复默认条件</button>
+      </div>
+
+      <section class="grp legend">
+        <h3>图例</h3>
+        <p><i class="dot dot-ok"></i>窗口内准点推焦</p>
+        <p><i class="dot dot-wait"></i>窗口内提前（等窗口，防生焦）</p>
+        <p><i class="dot dot-late"></i>压车/检修顺延，仍在窗口内</p>
+        <p><i class="dot dot-ruin"></i>已过窗口判废，不再后排</p>
+        <p><i class="swatch swatch-maint"></i>检修封锁时段</p>
+      </section>
+    </div>
+  </aside>
+
+  <!-- 中：推演图 + 明细表 -->
+  <section class="center">
+    <div class="panel chart-panel">
+      <div class="panel-head">
+        <h3>推焦时序推演图（横轴时刻，纵轴为推焦序号）</h3>
+        <div class="chart-tools">
+          <label>缩放
+            <select id="fZoom">
+              <option value="1">1 像素/分</option>
+              <option value="2" selected>2 像素/分</option>
+              <option value="4">4 像素/分</option>
+              <option value="8">8 像素/分</option>
+            </select>
+          </label>
+          <div class="playback">
+            <button class="btn btn-mini" id="btnToStart" title="回到接班">⏮</button>
+            <button class="btn btn-mini" id="btnStep" title="前进10分钟">⏭</button>
+            <button class="btn btn-mini" id="btnPlay" title="播放">▶</button>
+            <select id="fPlaySpeed">
+              <option value="15">15分/秒</option>
+              <option value="60" selected>60分/秒</option>
+              <option value="240">4时/秒</option>
+            </select>
+            <button class="btn btn-mini btn-warn" id="btnTen">拨到 10:00</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-scroll" id="chartScroll">
+        <div class="chart-inner" id="chartInner"></div>
+      </div>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="panel-head">
+        <h3>推焦明细表</h3>
+        <div class="hint">改“计划推焦”即改该孔条件，全部序号自动重排</div>
+      </div>
+      <div class="table-scroll">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th class="c-idx">序号</th>
+              <th class="c-oven">炉号</th>
+              <th class="c-time">装煤时刻</th>
+              <th class="c-time">结焦</th>
+              <th class="c-time">计划推焦</th>
+              <th class="c-win">结焦窗口</th>
+              <th class="c-time">推演推焦</th>
+              <th class="c-dev">偏差</th>
+              <th class="c-st">状态</th>
+              <th>排队/让路原因</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右：单孔回溯 -->
+  <aside class="panel side detail">
+    <div class="panel-head"><h3>单孔回溯</h3></div>
+    <div id="detailBody" class="detail-body">
+      <p class="placeholder">点击时序图或明细表中任一孔，<br>查看该孔为什么排在这个位置。</p>
+    </div>
+  </aside>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

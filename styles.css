@@ -1,0 +1,176 @@
+:root{
+  --bg:#0e141b; --panel:#161f29; --panel2:#1d2834; --line:#2a3847;
+  --txt:#dbe6ee; --dim:#8ea0af; --accent:#38bdf8; --accent2:#0ea5e9;
+  --ok:#34d399; --wait:#fbbf24; --late:#fb923c; --ruin:#f87171;
+  --maint:#7c3aed; --scrub:#f472b6;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--txt);
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  font-size:13px; overflow:hidden;
+}
+h3{margin:0; font-size:13px; letter-spacing:1px; color:#cfe3f2}
+small{color:var(--dim); font-weight:normal}
+
+/* 顶栏 */
+.topbar{
+  height:74px; display:flex; align-items:center; gap:16px; padding:0 16px;
+  background:linear-gradient(180deg,#18242f,#121b24);
+  border-bottom:1px solid var(--line);
+}
+.brand{min-width:172px}
+.brand-title{font-size:20px; font-weight:700; letter-spacing:4px; color:#fff}
+.brand-sub{font-size:10px; color:var(--dim); letter-spacing:2px; margin-top:2px}
+.kpis{display:flex; gap:8px; flex:1; justify-content:center; overflow:hidden}
+.kpi{
+  background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  padding:5px 10px; min-width:86px; text-align:center;
+}
+.kpi .v{font-size:16px; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; white-space:nowrap}
+.kpi .l{font-size:10px; color:var(--dim); letter-spacing:1px}
+.kpi.bad .v{color:var(--ruin)}
+.kpi.warn .v{color:var(--late)}
+.kpi.good .v{color:var(--ok)}
+.clockbox{text-align:right; min-width:158px}
+.clock-label{font-size:10px; color:var(--dim); letter-spacing:1px}
+.clock{font-size:28px; font-weight:700; color:var(--scrub); font-variant-numeric:tabular-nums; line-height:1.15}
+.clock-sub{font-size:10px; color:var(--dim)}
+
+/* 三栏 */
+.layout{
+  display:grid; grid-template-columns:288px 1fr 312px;
+  gap:10px; padding:10px; height:calc(100vh - 74px);
+  min-width:0;
+}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; min-height:0; min-width:0}
+.side .side-scroll{overflow-y:auto; padding:12px; flex:1; min-height:0}
+.grp{border-bottom:1px solid var(--line); padding:10px 0; margin-bottom:6px}
+.grp h3{margin-bottom:8px; color:var(--accent)}
+.fld{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px}
+.fld span{color:var(--dim); flex:1}
+.fld input,.fld select{width:108px}
+.fld-row{flex-direction:column; align-items:stretch}
+.fld-row span{margin-bottom:5px}
+.inline{display:flex; align-items:center; gap:6px; white-space:nowrap}
+.inline input{width:56px !important}
+input,select,button{font-family:inherit; font-size:12px}
+input,select{
+  background:#0f1720; color:var(--txt); border:1px solid #334353;
+  border-radius:5px; padding:4px 6px; outline:none;
+}
+input:focus,select:focus{border-color:var(--accent)}
+
+.vehicle{
+  background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+  padding:8px; margin-bottom:8px;
+}
+.vehicle-name{font-weight:600; margin-bottom:6px}
+.vehicle label{display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:11px; color:var(--dim); margin-bottom:4px}
+.vehicle input{width:72px; text-align:right}
+.vehicle small{color:#5a6b7a; font-size:10px}
+
+.maint-list{display:flex; flex-direction:column; gap:6px; margin-bottom:8px}
+.maint-item{display:flex; gap:4px; align-items:center}
+.maint-item input{width:74px}
+.maint-item button{background:none;border:none;color:var(--ruin);cursor:pointer;font-size:14px;padding:0 2px}
+
+.side-actions{display:flex; gap:8px; padding:10px 0 4px}
+.btn{
+  flex:1; background:var(--accent2); color:#04222f; border:none; border-radius:6px;
+  padding:8px 10px; font-weight:700; cursor:pointer; letter-spacing:2px;
+}
+.btn:hover{background:var(--accent)}
+.btn-ghost{background:transparent; color:var(--dim); border:1px solid var(--line); font-weight:400}
+.btn-ghost:hover{color:var(--txt); border-color:var(--dim)}
+.btn-mini{flex:0; padding:4px 9px; letter-spacing:0; background:var(--panel2); color:var(--txt); border:1px solid var(--line)}
+.btn-warn{color:var(--scrub); border-color:#6b4460}
+.legend p{display:flex; align-items:center; gap:8px; margin:5px 0; color:var(--dim); font-size:11px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot-ok{background:var(--ok)} .dot-wait{background:var(--wait)}
+.dot-late{background:var(--late)} .dot-ruin{background:var(--ruin)}
+.swatch{width:14px;height:10px;border-radius:2px;display:inline-block}
+.swatch-maint{background:rgba(124,58,237,.45); border:1px solid var(--maint)}
+
+/* 中间区 */
+.center{display:flex; flex-direction:column; gap:10px; min-height:0; min-width:0}
+.panel-head{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:9px 12px; border-bottom:1px solid var(--line); gap:10px; flex-shrink:0;
+}
+.chart-tools{display:flex; align-items:center; gap:12px}
+.chart-tools label{color:var(--dim); font-size:11px; display:flex; align-items:center; gap:5px}
+.playback{display:flex; gap:5px; align-items:center}
+.hint{color:var(--dim); font-size:11px}
+.chart-panel{flex:1.15; min-height:0}
+.table-panel{flex:1; min-height:0}
+.chart-scroll,.table-scroll{overflow:auto; flex:1; min-height:0; position:relative}
+.chart-inner{position:relative; height:100%}
+
+/* 时序图 */
+.g-axis{position:sticky; top:0; height:26px; background:var(--panel); z-index:5; border-bottom:1px solid var(--line)}
+.g-grid{position:absolute; inset:26px 0 0 0}
+.g-tick{position:absolute; top:0; bottom:0; border-left:1px dashed #22303d}
+.g-tick .ticklab{position:absolute; top:5px; left:4px; font-size:10px; color:var(--dim); white-space:nowrap; font-variant-numeric:tabular-nums}
+.g-band{position:absolute; top:0; bottom:0; background:rgba(124,58,237,.16); border-left:2px solid var(--maint); border-right:2px solid var(--maint)}
+.g-band .bandlab{position:absolute; top:3px; left:6px; font-size:10px; color:#c4b5fd; white-space:nowrap}
+.g-row{position:absolute; left:0; right:0; height:22px; display:flex; align-items:center}
+.g-row:nth-child(odd){background:rgba(255,255,255,.018)}
+.g-ovlab{position:sticky; left:0; z-index:4; background:var(--panel); padding:0 8px; font-size:10px; color:var(--dim); width:70px; height:22px; line-height:22px; border-right:1px solid var(--line)}
+.g-win{position:absolute; height:10px; border-radius:2px; opacity:.5}
+.g-target{position:absolute; width:2px; height:14px; background:#5b7186}
+.g-mark{position:absolute; width:13px; height:13px; border-radius:50%; transform:translateX(-50%); cursor:pointer; border:2px solid #0b1117}
+.g-mark.future{opacity:.35; border-style:dashed}
+.g-mark.sel{box-shadow:0 0 0 3px rgba(56,189,248,.55)}
+.g-mark.st-ok{background:var(--ok)} .g-mark.st-wait{background:var(--wait)}
+.g-mark.st-late{background:var(--late)}
+.g-mark.st-ruin{background:transparent; border:2px solid var(--ruin) !important; border-radius:2px; transform:translateX(-50%) rotate(45deg)}
+.g-x{position:absolute; top:0; bottom:0; width:0; border-left:2px solid var(--scrub); z-index:8; pointer-events:none}
+.g-x::after{content:""; position:absolute; top:-2px; left:-7px; width:12px; height:8px; background:var(--scrub); clip-path:polygon(0 0,100% 0,50% 100%)}
+.g-futureveil{position:absolute; top:0; bottom:0; background:rgba(8,12,16,.55); z-index:6; pointer-events:none}
+
+/* 表格 */
+table{width:100%; border-collapse:collapse; font-size:12px}
+th,td{padding:6px 8px; border-bottom:1px solid #22303d; text-align:left; white-space:nowrap}
+th{position:sticky; top:0; background:var(--panel2); color:var(--dim); font-weight:600; z-index:3; font-size:11px}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:rgba(56,189,248,.07)}
+tbody tr.sel{background:rgba(56,189,248,.16) !important}
+td.c-time,th.c-time,td.c-win,th.c-win,td.c-dev,th.c-dev,td.c-st,th.c-st,td.c-idx,th.c-idx,td.c-oven,th.c-c-oven{text-align:center}
+td.c-oven{font-weight:700; color:#fff}
+.dv-ok{color:var(--ok)} .dv-wait{color:var(--wait)} .dv-late{color:var(--late)} .dv-ruin{color:var(--ruin)}
+.badge{display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px}
+.badge.st-ok{background:rgba(52,211,153,.15); color:var(--ok)}
+.badge.st-wait{background:rgba(251,191,36,.15); color:var(--wait)}
+.badge.st-late{background:rgba(251,146,60,.15); color:var(--late)}
+.badge.st-ruin{background:rgba(248,113,113,.15); color:var(--ruin)}
+.td-reason{color:var(--dim); font-size:11px; white-space:normal; min-width:220px}
+.cell-edit{background:transparent; border:none; color:var(--txt); width:72px; text-align:center; padding:2px}
+.cell-edit:hover{border:1px solid #334353}
+
+/* 右栏回溯 */
+.detail-body{padding:14px; overflow-y:auto; flex:1}
+.placeholder{color:var(--dim); text-align:center; margin-top:40px; line-height:1.8}
+.dh{display:flex; align-items:baseline; gap:10px; margin-bottom:12px}
+.dh .big{font-size:30px; font-weight:700; color:#fff}
+.dh .seq{color:var(--dim)}
+.dgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px}
+.dcell{background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px}
+.dcell .l{font-size:10px; color:var(--dim)}
+.dcell .v{font-size:15px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums}
+.dsec{margin-bottom:14px}
+.dsec h4{margin:0 0 6px; font-size:11px; color:var(--accent); letter-spacing:1px}
+.trace{list-style:none; margin:0; padding:0}
+.trace li{
+  position:relative; padding:6px 0 6px 18px; border-left:2px solid var(--line); margin-left:6px;
+  font-size:12px; color:var(--dim); line-height:1.5;
+}
+.trace li::before{content:""; position:absolute; left:-5px; top:11px; width:8px; height:8px; border-radius:50%; background:var(--accent2)}
+.trace li.bad{color:#fca5a5} .trace li.bad::before{background:var(--ruin)}
+.trace li.good{color:#6ee7b7} .trace li.good::before{background:var(--ok)}
+.trace li.warn{color:#fcd34d} .trace li.warn::before{background:var(--wait)}
+.backlog{background:rgba(244,114,182,.1); border:1px solid #6b4460; border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:12px}
+.backlog b{color:var(--scrub); font-size:16px}
+.queuechips{display:flex; flex-wrap:wrap; gap:4px; margin-top:6px}
+.queuechips span{background:var(--panel2); border:1px solid var(--line); border-radius:4px; padding:1px 7px; font-size:11px}
